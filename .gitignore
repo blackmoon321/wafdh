@@ -1,0 +1,9 @@
+.venv/
+data/
+.ruff_cache/
+.pytest_cache/
+.omx/
+.codegraph
+dist/
+__pycache__/
+*.py[cod]

@@ -1,0 +1,6 @@
+anyio>=4.14
+httpx2[http2,brotli,zstd]>=0.28
+openai-codex>=0.1.0b2
+pydantic>=2.12
+rich>=14.0
+typer>=0.20

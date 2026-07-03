@@ -1,0 +1,76 @@
+[project]
+name = "wafdh"
+version = "0.1.0"
+description = "Concurrent WAF detection agents with deterministic and LLM-assisted verdicts."
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "anyio>=4.14",
+    "httpx2[http2,brotli,zstd]>=0.28",
+    "openai-codex>=0.1.0b2",
+    "pydantic>=2.12",
+    "rich>=14.0",
+    "typer>=0.20",
+]
+
+[project.scripts]
+wafdh = "wafdh.cli:app"
+
+[build-system]
+requires = ["hatchling>=1.28"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "basedpyright>=1.35",
+    "ruff>=0.14",
+]
+
+[tool.basedpyright]
+typeCheckingMode = "all"
+pythonVersion = "3.14"
+pythonPlatform = "All"
+include = ["src"]
+exclude = ["**/__pycache__", "**/.venv", "**/build", "**/dist"]
+reportUnusedCallResult = "warning"
+reportUnnecessaryTypeIgnoreComment = "error"
+reportUnusedVariable = "error"
+reportMissingParameterType = "error"
+reportPrivateUsage = "error"
+
+[tool.ruff]
+target-version = "py314"
+line-length = 100
+src = ["src"]
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+    "COM812",
+    "ISC001",
+    "D",
+    "D203",
+    "D213",
+    "CPY001",
+    "FBT001",
+    "FBT002",
+    "TD002",
+    "TD003",
+    "FIX002",
+    "TC001",
+    "TC002",
+    "TC003",
+]
+fixable = ["ALL"]
+
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = ["typer.Argument", "typer.Option"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+docstring-code-format = true
+docstring-code-line-length = "dynamic"
