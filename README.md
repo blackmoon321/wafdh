@@ -146,9 +146,12 @@ Each scan worker:
 
 Built-in signatures include Korean WAF/product markers for HMG Cloud WAF, Penta
 Security WAPPLES, Cloudbric, MONITORAPP AIONCLOUD/AIWAF, PIOLINK WEBFRONT-K,
-and F1Security WebCastle. Product-name-only pages are intentionally not enough;
-the Korean rules require vendor-specific block, challenge, or policy evidence to
-reduce false positives.
+F1Security WebCastle, and WINS SNIPER WAF. Product-name-only pages are
+intentionally not enough; the Korean rules require vendor-specific block,
+challenge, or policy evidence to reduce false positives. The Codex classifier
+also knows product-only Korean candidates such as eWalker WAF, WEBS-RAY, and
+Samsung SDS WAF, but may only name them when explicit response markers support
+that attribution.
 
 ## Development Tooling
 

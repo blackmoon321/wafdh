@@ -145,6 +145,12 @@ BUILTIN_CORE_RULES: tuple[WafRule, ...] = (
         ),
     ),
     WafRule(
+        "WINS SNIPER WAF",
+        "WINS",
+        Confidence.HIGH,
+        body_patterns=(r"document\.title\s*=\s*[^;]+sniper waf",),
+    ),
+    WafRule(
         "Fortinet FortiWeb",
         "Fortinet",
         Confidence.HIGH,

@@ -86,3 +86,6 @@ def test_prompt_includes_baseline_control_and_late_interesting_headers() -> None
     assert "x-iinfo=12-345" in prompt
     assert "Incapsula incident ID" in prompt
     assert "Do not turn CDN, load balancer, hosting, appliance login" in prompt
+    assert "Korean WAF candidates" in prompt
+    assert "WINS SNIPER" in prompt
+    assert "never infer them from product-list text alone" in prompt

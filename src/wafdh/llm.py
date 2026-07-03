@@ -145,7 +145,10 @@ def _classifier_prompt(report: TargetReport, previous: LlmVerdict | None) -> str
         "Compare baseline, benign control, and malicious payload responses. If the benign "
         "control is blocked the same way as malicious payloads, do not treat that response as "
         "payload-specific WAF evidence. For custom WAFs, use the most specific supported "
-        "generic/platform label when no public product marker exists. If evidence is "
+        "generic/platform label when no public product marker exists. For Korean WAF candidates, "
+        "consider names such as WAPPLES, Cloudbric, AIONCLOUD/AIWAF, WEBFRONT-K, F1-WebCastle, "
+        "WINS SNIPER, eWalker, WEBS-RAY, or Samsung SDS WAF only when explicit response markers "
+        "support them; never infer them from product-list text alone. If evidence is "
         "insufficient for WAF behavior, set detected=false and waf_name=null.\n\n"
         f"{_evidence_text(report)}"
     )

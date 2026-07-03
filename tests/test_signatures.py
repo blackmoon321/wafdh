@@ -98,6 +98,10 @@ def test_korean_waf_public_markers_match_only_with_product_evidence() -> None:
             "F1 WebCastle",
             _snapshot(body="F1-WebCastle request blocked by web application firewall."),
         ),
+        (
+            "WINS SNIPER WAF",
+            _snapshot(body='document.title = "Access denied by Sniper WAF";'),
+        ),
     )
 
     for expected, response in cases:
@@ -110,13 +114,15 @@ def test_korean_product_page_terms_alone_are_not_waf_signatures() -> None:
         reason_phrase="OK",
         body=(
             "WEBFRONT-K is a WAAP product. AIONCLOUD offers Web Application Firewall "
-            "services. F1-WebCastle is a software web firewall."
+            "services. F1-WebCastle is a software web firewall. SNIPER WAF is a "
+            "WINS product."
         ),
     )
 
     assert "AIONCLOUD WAF" not in _names(response)
     assert "PIOLINK WEBFRONT-K" not in _names(response)
     assert "F1 WebCastle" not in _names(response)
+    assert "WINS SNIPER WAF" not in _names(response)
 
 
 def test_external_fingerprint_rules_match_distinctive_vendor_markers() -> None:
