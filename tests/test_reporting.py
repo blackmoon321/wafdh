@@ -1,7 +1,14 @@
 from __future__ import annotations
 
-from wafdh.models import Confidence, Detection, DetectionSource, TargetReport, WafStatus
-from wafdh.reporting import summary_waf_names
+from wafdh.models import (
+    Confidence,
+    Detection,
+    DetectionSource,
+    FinalVerdict,
+    TargetReport,
+    WafStatus,
+)
+from wafdh.reporting import identification_reason, summary_waf_names
 
 
 def _detection(name: str, source: DetectionSource) -> Detection:
@@ -31,3 +38,29 @@ def test_summary_prefers_specific_signature_over_llm_generic_name() -> None:
     )
 
     assert summary_waf_names(report) == "Penta Security WAPPLES"
+
+
+def test_summary_uses_final_verdict_when_codex_resolves_generic_detection() -> None:
+    report = TargetReport(
+        target="https://example.test/",
+        final_url="https://example.test/",
+        waf_status=WafStatus.DETECTED,
+        crawled=True,
+        discovered_parameters=(),
+        detections=(_detection("Generic WAF or security gateway", DetectionSource.GENERIC),),
+        payloads=(),
+        llm_verdict=None,
+        final_verdict=FinalVerdict(
+            source=DetectionSource.LLM,
+            detected=True,
+            waf_name="AIONCLOUD WAF",
+            confidence=Confidence.HIGH,
+            rationale="Codex matched branded challenge evidence.",
+        ),
+        errors=(),
+    )
+
+    assert summary_waf_names(report) == "AIONCLOUD WAF"
+    assert (
+        identification_reason(report) == "AIONCLOUD WAF: Codex matched branded challenge evidence."
+    )

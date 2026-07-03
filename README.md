@@ -64,6 +64,12 @@ app-server and uses the local Codex authentication state created by
 escalates the same Codex thread to `xhigh` only when the first verdict is
 low/medium confidence or still names a generic/unknown WAF.
 
+JSON reports keep raw deterministic and LLM evidence in `detections`, while the
+summary table and CSV use `final_verdict` as the final attribution. Codex can
+promote a signature-missing target to a named or generic WAF, and it can veto a
+weak generic detection. High-confidence vendor-specific signatures remain guarded
+when Codex returns a generic or negative verdict without stronger evidence.
+
 Use `--llm-provider off` only for offline deterministic testing.
 
 Codex classification is required in the default `--llm-provider codex` mode. A
@@ -136,6 +142,13 @@ Each scan worker:
 5. Sends bounded GET-only WAF probe payloads.
 6. Runs deterministic signature and generic response-difference detection.
 7. Asks the selected LLM provider to classify the final WAF name from all collected evidence.
+8. Resolves `final_verdict` from Codex plus guarded deterministic evidence.
+
+Built-in signatures include Korean WAF/product markers for HMG Cloud WAF, Penta
+Security WAPPLES, Cloudbric, MONITORAPP AIONCLOUD/AIWAF, PIOLINK WEBFRONT-K,
+and F1Security WebCastle. Product-name-only pages are intentionally not enough;
+the Korean rules require vendor-specific block, challenge, or policy evidence to
+reduce false positives.
 
 ## Development Tooling
 

@@ -72,6 +72,53 @@ def test_hmg_cloud_waf_is_not_folded_into_penta_wapples() -> None:
     assert _names(response) == ("HMG Cloud WAF",)
 
 
+def test_korean_waf_public_markers_match_only_with_product_evidence() -> None:
+    cases = (
+        (
+            "Penta Security WAPPLES",
+            _snapshot(body="<title>Intelligent WAPPLES</title>"),
+        ),
+        (
+            "Cloudbric",
+            _snapshot(body="Cloudbric: Malicious Code Detected."),
+        ),
+        (
+            "AIONCLOUD WAF",
+            _snapshot(body="AIONCLOUD JS Challenge blocked this automated request."),
+        ),
+        (
+            "MONITORAPP AIWAF",
+            _snapshot(body="MONITORAPP AIWAF access denied by web application firewall."),
+        ),
+        (
+            "PIOLINK WEBFRONT-K",
+            _snapshot(body="PIOLINK WEBFRONT-K request blocked by WAF policy."),
+        ),
+        (
+            "F1 WebCastle",
+            _snapshot(body="F1-WebCastle request blocked by web application firewall."),
+        ),
+    )
+
+    for expected, response in cases:
+        assert expected in _names(response)
+
+
+def test_korean_product_page_terms_alone_are_not_waf_signatures() -> None:
+    response = _snapshot(
+        status_code=200,
+        reason_phrase="OK",
+        body=(
+            "WEBFRONT-K is a WAAP product. AIONCLOUD offers Web Application Firewall "
+            "services. F1-WebCastle is a software web firewall."
+        ),
+    )
+
+    assert "AIONCLOUD WAF" not in _names(response)
+    assert "PIOLINK WEBFRONT-K" not in _names(response)
+    assert "F1 WebCastle" not in _names(response)
+
+
 def test_external_fingerprint_rules_match_distinctive_vendor_markers() -> None:
     cases = (
         (

@@ -89,6 +89,7 @@ BUILTIN_CORE_RULES: tuple[WafRule, ...] = (
             r"detect url",
             r"detect time",
             r"wapples",
+            r"intelligent wapples",
             r"penta security",
         ),
         negative_patterns=(r"hmg cloud waf\s*\(web firewall\)",),
@@ -103,6 +104,44 @@ BUILTIN_CORE_RULES: tuple[WafRule, ...] = (
             r"please contact cloudbric support",
             r"cloudbric\.zendesk\.com",
             r"cloudbric help center",
+            r"cloudbric.{0,40}?malicious code detected",
+            r"malformed request syntax.{0,8}?invalid request message framing",
+        ),
+    ),
+    WafRule(
+        "AIONCLOUD WAF",
+        "MONITORAPP",
+        Confidence.HIGH,
+        required_patterns=(
+            r"aioncloud",
+            r"access denied|blocked|block page|js challenge",
+        ),
+    ),
+    WafRule(
+        "MONITORAPP AIWAF",
+        "MONITORAPP",
+        Confidence.HIGH,
+        required_patterns=(
+            r"monitorapp|aiwaf",
+            r"access denied|blocked|block page|js challenge",
+        ),
+    ),
+    WafRule(
+        "PIOLINK WEBFRONT-K",
+        "PIOLINK",
+        Confidence.HIGH,
+        required_patterns=(
+            r"piolink|webfront[- ]?k",
+            r"access denied|request blocked|blocked by|waf policy",
+        ),
+    ),
+    WafRule(
+        "F1 WebCastle",
+        "F1Security",
+        Confidence.HIGH,
+        required_patterns=(
+            r"f1[- ]?webcastle|webcastle",
+            r"access denied|request blocked|blocked by|waf policy",
         ),
     ),
     WafRule(

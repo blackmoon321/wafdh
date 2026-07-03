@@ -19,6 +19,7 @@ from wafdh.models import (
     DetectionSource,
     FetchFailure,
     FetchOk,
+    FinalVerdict,
     LlmProvider,
     LlmVerdict,
     ScanReport,
@@ -28,6 +29,7 @@ from wafdh.models import (
 )
 from wafdh.probes import PayloadRun, payload_seeds, run_controls, run_payloads
 from wafdh.signatures import SignatureMatcher, load_rules
+from wafdh.verdicts import resolve_final_verdict
 
 type ScanProgressCallback = Callable[[TargetReport], None]
 
@@ -85,6 +87,7 @@ class ScanWorker:
                     detections=detections,
                     payloads=payloads,
                     llm_verdict=None,
+                    final_verdict=None,
                     errors=(),
                 )
                 llm_verdict = (
@@ -93,10 +96,15 @@ class ScanWorker:
                     else None
                 )
                 merged_detections = _merge_llm_detection(detections, llm_verdict)
+                final_verdict = resolve_final_verdict(
+                    detections,
+                    llm_verdict,
+                    payload_count=len(payloads),
+                )
                 return TargetReport(
                     target=str(target.url),
                     final_url=str(baseline.final_url),
-                    waf_status=_waf_status(merged_detections, len(payloads)),
+                    waf_status=_waf_status_from_final(final_verdict, len(payloads)),
                     crawled=partial.crawled,
                     baseline=baseline,
                     controls=controls,
@@ -104,6 +112,7 @@ class ScanWorker:
                     detections=merged_detections,
                     payloads=payloads,
                     llm_verdict=llm_verdict,
+                    final_verdict=final_verdict,
                     errors=(),
                 )
 
@@ -201,6 +210,7 @@ def _failed_report(target: Target, reason: str) -> TargetReport:
         detections=(),
         payloads=(),
         llm_verdict=None,
+        final_verdict=None,
         errors=(reason,),
     )
 
@@ -239,6 +249,14 @@ def _merge_llm_detection(
 
 def _waf_status(detections: tuple[Detection, ...], payload_count: int) -> WafStatus:
     if len(detections) > 0:
+        return WafStatus.DETECTED
+    if payload_count == 0:
+        return WafStatus.UNKNOWN
+    return WafStatus.NOT_DETECTED
+
+
+def _waf_status_from_final(verdict: FinalVerdict, payload_count: int) -> WafStatus:
+    if verdict.detected:
         return WafStatus.DETECTED
     if payload_count == 0:
         return WafStatus.UNKNOWN

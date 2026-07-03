@@ -103,6 +103,16 @@ class LlmVerdict(BaseModel):
     suggested_rule: str | None = None
 
 
+class FinalVerdict(BaseModel):
+    model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
+
+    source: DetectionSource | None
+    detected: bool
+    waf_name: str | None
+    confidence: Confidence
+    rationale: str
+
+
 class TargetReport(BaseModel):
     model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
@@ -116,6 +126,7 @@ class TargetReport(BaseModel):
     detections: tuple[Detection, ...]
     payloads: tuple[PayloadEvidence, ...]
     llm_verdict: LlmVerdict | None
+    final_verdict: FinalVerdict | None = None
     errors: tuple[str, ...]
 
 

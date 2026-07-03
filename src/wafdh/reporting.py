@@ -10,7 +10,8 @@ from typing import Final
 from rich.console import Console
 from rich.table import Table
 
-from wafdh.models import Detection, DetectionSource, ScanReport, Target, TargetReport, WafStatus
+from wafdh.models import Detection, ScanReport, Target, TargetReport, WafStatus
+from wafdh.verdicts import is_generic_detection, primary_detection
 
 DEFAULT_DATA_DIR = Path("data")
 CSV_COLUMNS: Final[tuple[str, ...]] = (
@@ -21,23 +22,6 @@ CSV_COLUMNS: Final[tuple[str, ...]] = (
     "llm",
     "final_url",
     "crawled",
-)
-GENERIC_WAF_NAME_MARKERS: Final[tuple[str, ...]] = (
-    "apache",
-    "application load balancer",
-    "alb",
-    "custom",
-    "edge filtering",
-    "filter",
-    "filtering",
-    "generic",
-    "iis",
-    "nginx",
-    "request filtering",
-    "security filter",
-    "security gateway",
-    "unknown",
-    "unspecified",
 )
 
 
@@ -146,7 +130,12 @@ def _summary_table(report: ScanReport) -> Table:
 
 
 def summary_waf_names(target: TargetReport) -> str:
-    specific = tuple(detection for detection in target.detections if not _is_generic(detection))
+    verdict = target.final_verdict
+    if verdict is not None and verdict.detected and verdict.waf_name is not None:
+        return verdict.waf_name
+    specific = tuple(
+        detection for detection in target.detections if not is_generic_detection(detection)
+    )
     if len(specific) > 0:
         return _unique_detection_names(specific)
     return _unique_detection_names(target.detections)
@@ -163,7 +152,12 @@ def identified_waf(target: TargetReport) -> str:
 def identification_reason(target: TargetReport) -> str:
     if len(target.errors) > 0:
         return "; ".join(target.errors)
-    primary = _primary_detection(target)
+    verdict = target.final_verdict
+    if verdict is not None:
+        if verdict.detected and verdict.waf_name is not None:
+            return f"{verdict.waf_name}: {verdict.rationale}"
+        return verdict.rationale
+    primary = primary_detection(target.detections)
     if primary is not None:
         return f"{primary.name}: {primary.reason}"
     if target.waf_status == WafStatus.NOT_DETECTED:
@@ -193,22 +187,6 @@ def _unique_detection_names(detections: tuple[Detection, ...]) -> str:
         seen.add(detection.name)
         names.append(detection.name)
     return ", ".join(names) or "-"
-
-
-def _primary_detection(target: TargetReport) -> Detection | None:
-    specific = tuple(detection for detection in target.detections if not _is_generic(detection))
-    if len(specific) > 0:
-        return specific[0]
-    if len(target.detections) > 0:
-        return target.detections[0]
-    return None
-
-
-def _is_generic(detection: Detection) -> bool:
-    if detection.source == DetectionSource.GENERIC:
-        return True
-    normalized = detection.name.casefold()
-    return any(marker in normalized for marker in GENERIC_WAF_NAME_MARKERS)
 
 
 def _write_summary_csv(report: ScanReport, output: Path) -> None:
