@@ -22,6 +22,23 @@ CSV_COLUMNS: Final[tuple[str, ...]] = (
     "final_url",
     "crawled",
 )
+GENERIC_WAF_NAME_MARKERS: Final[tuple[str, ...]] = (
+    "apache",
+    "application load balancer",
+    "alb",
+    "custom",
+    "edge filtering",
+    "filter",
+    "filtering",
+    "generic",
+    "iis",
+    "nginx",
+    "request filtering",
+    "security filter",
+    "security gateway",
+    "unknown",
+    "unspecified",
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -188,7 +205,10 @@ def _primary_detection(target: TargetReport) -> Detection | None:
 
 
 def _is_generic(detection: Detection) -> bool:
-    return detection.source == DetectionSource.GENERIC
+    if detection.source == DetectionSource.GENERIC:
+        return True
+    normalized = detection.name.casefold()
+    return any(marker in normalized for marker in GENERIC_WAF_NAME_MARKERS)
 
 
 def _write_summary_csv(report: ScanReport, output: Path) -> None:

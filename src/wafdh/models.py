@@ -52,7 +52,8 @@ class ResponseSnapshot(BaseModel):
     status_code: int
     reason_phrase: str
     headers: tuple[tuple[str, str], ...]
-    body_excerpt: str = Field(max_length=4096)
+    body_excerpt: str = Field(max_length=16384)
+    redirects: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -109,6 +110,8 @@ class TargetReport(BaseModel):
     final_url: str | None
     waf_status: WafStatus
     crawled: bool
+    baseline: ResponseSnapshot | None = None
+    controls: tuple[PayloadEvidence, ...] = ()
     discovered_parameters: tuple[ParameterSeed, ...]
     detections: tuple[Detection, ...]
     payloads: tuple[PayloadEvidence, ...]

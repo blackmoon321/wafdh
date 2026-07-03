@@ -11,6 +11,7 @@ class PayloadCase:
 
 
 DEFAULT_PARAMETER = "wafdh_probe"
+BENIGN_CONTROL_PAYLOAD = PayloadCase("benign-control", DEFAULT_PARAMETER, "wafdh-benign-control")
 
 DEFAULT_PAYLOADS: tuple[PayloadCase, ...] = (
     PayloadCase("xss", DEFAULT_PARAMETER, "<script>alert(1)</script>"),

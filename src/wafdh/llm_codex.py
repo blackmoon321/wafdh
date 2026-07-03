@@ -17,7 +17,18 @@ from wafdh.models import Confidence, LlmVerdict, TargetReport
 
 _CODEX_CLOSE_TIMEOUT_SECONDS: Final[float] = 10.0
 _AMBIGUOUS_WAF_NAME_MARKERS: Final[tuple[str, ...]] = (
+    "apache",
+    "application load balancer",
+    "alb",
+    "custom",
+    "edge filtering",
+    "filter",
+    "filtering",
     "generic",
+    "iis",
+    "nginx",
+    "request filtering",
+    "security filter",
     "unknown",
     "security gateway",
     "unspecified",

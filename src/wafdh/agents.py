@@ -26,7 +26,7 @@ from wafdh.models import (
     TargetReport,
     WafStatus,
 )
-from wafdh.probes import PayloadRun, payload_seeds, run_payloads
+from wafdh.probes import PayloadRun, payload_seeds, run_controls, run_payloads
 from wafdh.signatures import SignatureMatcher, load_rules
 
 type ScanProgressCallback = Callable[[TargetReport], None]
@@ -60,20 +60,27 @@ class ScanWorker:
                     start=baseline,
                     max_pages=self.runtime.config.max_pages,
                 )
-                payloads = await run_payloads(
-                    PayloadRun(
-                        fetcher=self.runtime.fetcher,
-                        baseline_url=str(baseline.final_url),
-                        seeds=payload_seeds(str(target.url), str(baseline.final_url), discovered),
-                        max_payloads=self.runtime.config.max_payloads_per_target,
-                    )
+                seeds = payload_seeds(str(target.url), str(baseline.final_url), discovered)
+                payload_run = PayloadRun(
+                    fetcher=self.runtime.fetcher,
+                    baseline_url=str(baseline.final_url),
+                    seeds=seeds,
+                    max_payloads=self.runtime.config.max_payloads_per_target,
                 )
-                detections = self.runtime.detector.detect(baseline=baseline, payloads=payloads)
+                controls = await run_controls(payload_run)
+                payloads = await run_payloads(payload_run)
+                detections = self.runtime.detector.detect(
+                    baseline=baseline,
+                    controls=controls,
+                    payloads=payloads,
+                )
                 partial = TargetReport(
                     target=str(target.url),
                     final_url=str(baseline.final_url),
                     waf_status=_waf_status(detections, len(payloads)),
                     crawled=can_crawl_target(str(target.url), str(baseline.final_url)),
+                    baseline=baseline,
+                    controls=controls,
                     discovered_parameters=discovered,
                     detections=detections,
                     payloads=payloads,
@@ -91,6 +98,8 @@ class ScanWorker:
                     final_url=str(baseline.final_url),
                     waf_status=_waf_status(merged_detections, len(payloads)),
                     crawled=partial.crawled,
+                    baseline=baseline,
+                    controls=controls,
                     discovered_parameters=discovered,
                     detections=merged_detections,
                     payloads=payloads,
@@ -186,6 +195,8 @@ def _failed_report(target: Target, reason: str) -> TargetReport:
         final_url=None,
         waf_status=WafStatus.SCAN_FAILED,
         crawled=False,
+        baseline=None,
+        controls=(),
         discovered_parameters=(),
         detections=(),
         payloads=(),

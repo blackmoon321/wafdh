@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from wafdh.crawler import can_crawl_target
 from wafdh.http_client import HttpFetcher
 from wafdh.models import FetchFailure, FetchOk, ParameterSeed, PayloadEvidence
-from wafdh.payloads import DEFAULT_PARAMETER, DEFAULT_PAYLOADS
+from wafdh.payloads import BENIGN_CONTROL_PAYLOAD, DEFAULT_PARAMETER, DEFAULT_PAYLOADS
 
 
 @dataclass(frozen=True, slots=True)
@@ -44,6 +44,34 @@ async def run_payloads(run: PayloadRun) -> tuple[PayloadEvidence, ...]:
                             error=reason,
                         )
                     )
+    return tuple(evidence)
+
+
+async def run_controls(run: PayloadRun) -> tuple[PayloadEvidence, ...]:
+    evidence: list[PayloadEvidence] = []
+    for seed in run.seeds:
+        result = await run.fetcher.get(seed.url, params={seed.name: BENIGN_CONTROL_PAYLOAD.value})
+        match result:
+            case FetchOk(response=response):
+                evidence.append(
+                    PayloadEvidence(
+                        name=BENIGN_CONTROL_PAYLOAD.name,
+                        target_url=seed.url,
+                        parameter=seed.name,
+                        response=response,
+                        error=None,
+                    )
+                )
+            case FetchFailure(reason=reason):
+                evidence.append(
+                    PayloadEvidence(
+                        name=BENIGN_CONTROL_PAYLOAD.name,
+                        target_url=run.baseline_url,
+                        parameter=seed.name,
+                        response=None,
+                        error=reason,
+                    )
+                )
     return tuple(evidence)
 
 

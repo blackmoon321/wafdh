@@ -9,7 +9,7 @@ import httpx2
 
 from wafdh.models import FetchFailure, FetchOk, FetchResult, ResponseSnapshot
 
-_BODY_LIMIT = 4096
+_BODY_LIMIT = 16384
 
 
 class HttpFetcher(Protocol):
@@ -80,4 +80,5 @@ def _snapshot(response: httpx2.Response, request_url: str) -> ResponseSnapshot:
         reason_phrase=response.reason_phrase,
         headers=headers,
         body_excerpt=response.text[:_BODY_LIMIT],
+        redirects=tuple(str(redirect.url) for redirect in response.history),
     )
