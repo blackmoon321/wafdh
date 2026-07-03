@@ -76,6 +76,20 @@ def main(  # noqa: PLR0913
             help="LLM engine for final WAF classification: codex or off.",
         ),
     ] = LlmProvider.CODEX,
+    codex_turn_timeout_seconds: Annotated[
+        float,
+        typer.Option(
+            "--codex-turn-timeout",
+            help="Seconds to wait for one Codex turn before restarting Codex and retrying.",
+        ),
+    ] = 600.0,
+    codex_max_attempts: Annotated[
+        int,
+        typer.Option(
+            "--codex-max-attempts",
+            help="Maximum Codex attempts per target before recording an LLM error verdict.",
+        ),
+    ] = 3,
 ) -> None:
     if ctx.invoked_subcommand is not None:
         return
@@ -93,6 +107,8 @@ def main(  # noqa: PLR0913
         max_pages=4,
         max_payloads_per_target=12,
         llm_provider=llm_provider,
+        codex_turn_timeout_seconds=codex_turn_timeout_seconds,
+        codex_max_attempts=codex_max_attempts,
     )
     artifacts = (
         create_resume_report_artifacts(resume)

@@ -82,11 +82,34 @@ def emit_report(
 
 def emit_incomplete_report_notice(artifacts: ReportArtifacts, error: Exception) -> None:
     console = Console(stderr=True)
-    _ = console.print(f"Run stopped before output was finalized: {type(error).__name__}: {error}")
+    _ = console.print(f"Run stopped before output was finalized: {_error_summary(error)}")
     if artifacts.checkpoint_path.exists():
         _ = console.print(f"Completed target checkpoint JSONL: {artifacts.checkpoint_path}")
         return
     _ = console.print("No completed target checkpoint was written.")
+
+
+def _error_summary(error: Exception) -> str:
+    summaries = tuple(summary for summary in _leaf_error_summaries(error) if summary.strip())
+    if len(summaries) == 1:
+        return summaries[0]
+    if len(summaries) > 1:
+        return "; ".join(summaries)
+    return f"{type(error).__name__}: {error}"
+
+
+def _leaf_error_summaries(error: BaseException) -> tuple[str, ...]:
+    match error:
+        case BaseExceptionGroup(exceptions=exceptions):
+            summaries: list[str] = []
+            for nested in exceptions:
+                summaries.extend(_leaf_error_summaries(nested))
+            return tuple(summaries)
+        case _:
+            message = str(error)
+            if message == "":
+                return ()
+            return (f"{type(error).__name__}: {message}",)
 
 
 def _summary_table(report: ScanReport) -> Table:

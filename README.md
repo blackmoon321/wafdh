@@ -66,6 +66,13 @@ low/medium confidence or still names a generic/unknown WAF.
 
 Use `--llm-provider off` only for offline deterministic testing.
 
+Codex classification is required in the default `--llm-provider codex` mode. A
+single Codex turn waits up to `--codex-turn-timeout` seconds, defaulting to
+`600`, and each target gets up to `--codex-max-attempts` fresh Codex app-server
+attempts, defaulting to `3`. If all attempts fail, the run stops without writing
+that target as completed; rerun with `--resume` after Codex connectivity recovers
+to classify the same unfinished target.
+
 ## Usage
 
 ```bash
@@ -73,6 +80,7 @@ uv run wafdh -u https://example.com
 uv run wafdh -l targets.txt
 uv run wafdh -u https://example.com -o report.csv
 uv run wafdh -l targets.txt -o report.csv
+uv run wafdh -l targets.txt --codex-turn-timeout 900 --codex-max-attempts 4
 uv run wafdh --llm-provider off -u https://example.com -o report.csv
 uv run wafdh -l targets.txt --resume data/wafdh-20260702T000000Z-targets.partial.jsonl -o report.csv
 uv run wafdh list-rules

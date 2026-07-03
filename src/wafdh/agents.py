@@ -12,7 +12,7 @@ from wafdh.config import ScanConfig
 from wafdh.crawler import can_crawl_target, crawl_same_origin
 from wafdh.detector import WafDetector
 from wafdh.http_client import HttpClient, HttpClientConfig, HttpFetcher, create_async_client
-from wafdh.llm import LlmConfig
+from wafdh.llm import LlmClassificationError, LlmConfig
 from wafdh.llm_codex import CodexLlmAnalyzer
 from wafdh.models import (
     Detection,
@@ -170,6 +170,8 @@ async def _worker_loop(
         async for target in receiver:
             try:
                 report = await scan_worker.scan(target)
+            except LlmClassificationError:
+                raise
             except Exception as exc:  # noqa: BLE001
                 report = _failed_report(
                     target,
@@ -198,6 +200,8 @@ def _llm_analyzer(config: ScanConfig) -> LlmClassifier | None:
         primary_reasoning_effort=config.codex_primary_reasoning_effort,
         escalation_reasoning_effort=config.codex_escalation_reasoning_effort,
         concurrency=config.codex_concurrency,
+        turn_timeout_seconds=config.codex_turn_timeout_seconds,
+        max_attempts=config.codex_max_attempts,
     )
     match config.llm_provider:
         case LlmProvider.CODEX:

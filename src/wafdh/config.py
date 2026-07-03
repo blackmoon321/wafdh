@@ -28,6 +28,8 @@ class ScanConfig:
     codex_primary_reasoning_effort: str = "high"
     codex_escalation_reasoning_effort: str = "xhigh"
     codex_concurrency: int = 1
+    codex_turn_timeout_seconds: float = 600.0
+    codex_max_attempts: int = 3
     llm_provider: LlmProvider = LlmProvider.CODEX
 
 
@@ -38,6 +40,8 @@ class CliScanOptions:
     max_pages: int
     max_payloads_per_target: int
     llm_provider: LlmProvider
+    codex_turn_timeout_seconds: float
+    codex_max_attempts: int
 
 
 def build_config(options: CliScanOptions) -> ScanConfig:
@@ -47,6 +51,8 @@ def build_config(options: CliScanOptions) -> ScanConfig:
         max_pages=options.max_pages,
         max_payloads_per_target=options.max_payloads_per_target,
         codex_concurrency=select_codex_concurrency(options.worker_count),
+        codex_turn_timeout_seconds=max(1.0, options.codex_turn_timeout_seconds),
+        codex_max_attempts=max(1, options.codex_max_attempts),
         llm_provider=options.llm_provider,
     )
 

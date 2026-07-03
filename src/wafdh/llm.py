@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import ClassVar
+from typing import ClassVar, override
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
@@ -26,6 +26,21 @@ class LlmConfig:
     primary_reasoning_effort: str
     escalation_reasoning_effort: str
     concurrency: int
+    turn_timeout_seconds: float
+    max_attempts: int
+
+
+@dataclass(frozen=True, slots=True)
+class LlmClassificationError(Exception):
+    model: str
+    failures: tuple[str, ...]
+
+    @override
+    def __str__(self) -> str:
+        return (
+            f"required LLM classification failed for {self.model} "
+            f"after {len(self.failures)} attempts: {'; '.join(self.failures)}"
+        )
 
 
 def build_codex_prompt(report: TargetReport, previous: LlmVerdict | None = None) -> str:

@@ -7,14 +7,15 @@ from openai_codex import ApprovalMode, AsyncCodex, CodexError, Sandbox
 from openai_codex.types import ReasoningEffort
 
 from wafdh.llm import (
+    LlmClassificationError,
     LlmConfig,
     build_codex_prompt,
-    llm_error_verdict,
     parse_codex_response_text,
     verdict_schema,
 )
 from wafdh.models import Confidence, LlmVerdict, TargetReport
 
+_CODEX_CLOSE_TIMEOUT_SECONDS: Final[float] = 10.0
 _AMBIGUOUS_WAF_NAME_MARKERS: Final[tuple[str, ...]] = (
     "generic",
     "unknown",
@@ -34,8 +35,26 @@ class CodexLlmAnalyzer:
             return await self._analyze(partial_report)
 
     async def _analyze(self, partial_report: TargetReport) -> LlmVerdict:
+        failures: list[str] = []
+        max_attempts = max(1, self._config.max_attempts)
+        for attempt in range(1, max_attempts + 1):
+            try:
+                return await self._analyze_attempt(partial_report)
+            except TimeoutError:
+                failures.append(
+                    f"attempt {attempt} timed out after {self._config.turn_timeout_seconds:g}s"
+                )
+            except (CodexError, RuntimeError) as exc:
+                failures.append(f"attempt {attempt} failed: {type(exc).__name__}: {exc}")
+            if attempt < max_attempts:
+                await anyio.sleep(min(float(attempt), 5.0))
+        raise LlmClassificationError(self._config.model, tuple(failures))
+
+    async def _analyze_attempt(self, partial_report: TargetReport) -> LlmVerdict:
+        codex = AsyncCodex()
         try:
-            async with AsyncCodex() as codex:
+            with anyio.fail_after(self._config.turn_timeout_seconds):
+                _ = await codex.__aenter__()
                 thread = await codex.thread_start(
                     approval_mode=ApprovalMode.deny_all,
                     ephemeral=True,
@@ -60,8 +79,9 @@ class CodexLlmAnalyzer:
                     output_schema=verdict_schema(),
                     sandbox=Sandbox.read_only,
                 )
-        except (CodexError, RuntimeError) as exc:
-            return llm_error_verdict(self._config.model, f"Codex SDK failed: {exc}")
+        finally:
+            with anyio.move_on_after(_CODEX_CLOSE_TIMEOUT_SECONDS, shield=True):
+                await codex.close()
         return _with_reasoning_effort(
             parse_codex_response_text(review.final_response or "", self._config.model),
             self._config.escalation_reasoning_effort,
