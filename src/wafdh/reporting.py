@@ -191,7 +191,7 @@ def _unique_detection_names(detections: tuple[Detection, ...]) -> str:
 
 def _write_summary_csv(report: ScanReport, output: Path) -> None:
     output.parent.mkdir(parents=True, exist_ok=True)
-    with output.open("w", encoding="utf-8", newline="") as output_file:
+    with output.open("w", encoding="utf-8-sig", newline="") as output_file:
         csv_writer = writer(output_file)
         csv_writer.writerow(CSV_COLUMNS)
         for target in report.targets:

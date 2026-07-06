@@ -1,6 +1,6 @@
 [project]
 name = "wafdh"
-version = "0.1.4"
+version = "0.1.5"
 description = "Concurrent WAF detection agents with deterministic and LLM-assisted verdicts."
 readme = "README.md"
 requires-python = ">=3.13"
